@@ -13,15 +13,14 @@ import java.nio.charset.StandardCharsets;
 public class StateReader {
     private static final Logger log = LogManager.getLogger(StateReader.class);
 
-    private final String statePath;
+    private final File file;
 
-    public StateReader(String statePath) {
-        this.statePath = statePath;
+    public StateReader(File file) {
+        this.file = file;
     }
 
     public State restoreState() {
         ReversedLinesFileReader reader;
-        File file = new File(statePath);
         try {
             if (!file.exists()) {
                 if (file.createNewFile()) {

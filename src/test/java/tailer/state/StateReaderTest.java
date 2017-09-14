@@ -24,7 +24,7 @@ public class StateReaderTest extends TempDirTest {
 
     @Test
     public void restoreStateNoFileTest() throws Exception {
-        StateReader stateReader = new StateReader(dir.resolve("nosuchfilepresent").toString());
+        StateReader stateReader = new StateReader(dir.resolve("nosuchfilepresent").toFile());
         State state = stateReader.restoreState();
         Assert.assertEquals(0, state.getInode());
         Assert.assertEquals(0, state.getLastAckedPos());
@@ -33,7 +33,7 @@ public class StateReaderTest extends TempDirTest {
     private void test(String resourcePath, int expectedInode, int expectedPos) throws IOException {
         String tempFilename = "tmp";
         copyResourceToTempDir(resourcePath, tempFilename);
-        StateReader stateReader = new StateReader(dir.resolve(tempFilename).toString());
+        StateReader stateReader = new StateReader(dir.resolve(tempFilename).toFile());
         State state = stateReader.restoreState();
         Assert.assertEquals(expectedInode, state.getInode());
         Assert.assertEquals(expectedPos, state.getLastAckedPos());

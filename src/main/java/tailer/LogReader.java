@@ -72,7 +72,7 @@ public class LogReader implements RotatingReader, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         IOUtils.closeQuietly(fn);
     }
 }

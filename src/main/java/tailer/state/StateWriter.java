@@ -5,15 +5,14 @@ import java.io.*;
 public class StateWriter {
     static final char SEPARATOR = '\t';
 
-    private final String statePath;
+    private final File file;
 
-    public StateWriter(String statePath) {
-        this.statePath = statePath;
+    public StateWriter(File file) {
+        this.file = file;
     }
 
     public void writeState(State state) throws IOException {
-        File file = new File(statePath);
-        try (FileWriter fw = new FileWriter(file.getAbsoluteFile(), true)) {
+        try (FileWriter fw = new FileWriter(file, true)) {
             try (BufferedWriter bw = new BufferedWriter(fw)) {
                 bw.write(state.getLastAckedPos() + SEPARATOR + state.getInode() + "\n");
             }

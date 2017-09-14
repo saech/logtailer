@@ -22,4 +22,11 @@ public class ConfigContext {
         return config.getString("tailer.state.path");
     }
 
+    public String getHost() {
+        return config.getString("tailer.sender.connection.ip");
+    }
+
+    public int getPort() {
+        return config.getInt("tailer.sender.connection.port");
+    }
 }
