@@ -1,20 +1,16 @@
 package tailer.filechooser;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import util.LogNameComparator;
 import util.RotatedFilesFilter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class FileChooserImpl implements FileChooser {
-    private static final Logger log = LogManager.getLogger(FileChooserImpl.class);
-
     private final File dir;
     private final File mainLog;
     private final String rotatedPrefix;
@@ -32,12 +28,16 @@ public class FileChooserImpl implements FileChooser {
             if (isNext) {
                 try {
                     return FileNode.open(file);
-                } catch (FileNotFoundException e) {
+                } catch (IOException e) {
                     return null;
                 }
             }
-            if (InodeWrap.getInode(file) == inode) {
-                isNext = true;
+            try {
+                if (InodeWrap.getInode(file) == inode) {
+                    isNext = true;
+                }
+            } catch (IOException e) {
+                return null;
             }
         }
         return findOldest();
@@ -50,7 +50,7 @@ public class FileChooserImpl implements FileChooser {
         }
         try {
             return FileNode.open(logs.get(0));
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             return null;
         }
     }
@@ -58,12 +58,12 @@ public class FileChooserImpl implements FileChooser {
     public FileNode find(long inode) {
         List<File> logs = getSortedLogFiles();
         for (File file : logs) {
-            if (InodeWrap.getInode(file) == inode) {
-                try {
+            try {
+                if (InodeWrap.getInode(file) == inode) {
                     return FileNode.open(file);
-                } catch (FileNotFoundException e) {
-                    return null;
                 }
+            } catch (IOException e) {
+                return null;
             }
         }
         return null;

@@ -2,12 +2,12 @@ package tailer.filechooser;
 
 import java.io.*;
 
-public class FileNode implements AutoCloseable, Closeable {
+public class FileNode implements Closeable {
     private final File file;
     private final long inode;
     private final RandomAccessFile raf;
 
-    private FileNode(File file) throws FileNotFoundException {
+    private FileNode(File file) throws IOException {
         this.file = file;
         this.raf = new RandomAccessFile(file, "r");
         this.inode = InodeWrap.getInode(file);
@@ -17,7 +17,7 @@ public class FileNode implements AutoCloseable, Closeable {
         return this.raf.read(bytes);
     }
 
-    public boolean isMoved() {
+    public boolean isMoved() throws IOException {
         return InodeWrap.getInode(file) != inode;
     }
 
@@ -38,7 +38,7 @@ public class FileNode implements AutoCloseable, Closeable {
         raf.seek(pos);
     }
 
-    public static FileNode open(File f) throws FileNotFoundException {
+    public static FileNode open(File f) throws IOException {
         return new FileNode(f);
     }
 

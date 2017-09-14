@@ -1,12 +1,12 @@
 package tailer;
 
-import context.ConfigContext;
 import org.junit.Assert;
 import org.junit.Test;
 import tailer.filechooser.FileChooserImpl;
 import tailer.filechooser.RotatingFileChooser;
 
-import java.io.File;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 public class LogReaderTest extends TempDirTest {
     @Test
-    public void testLogReader() throws IOException {
+    public void testLogReaderWithRealTimeAppend() throws IOException {
         copyResourceToTempDir("/logs/log.1", "log.1");
         copyResourceToTempDir("/logs/log.2", "log.2");
         copyResourceToTempDir("/logs/log.txt", "log.txt");
@@ -36,6 +36,17 @@ public class LogReaderTest extends TempDirTest {
         Assert.assertEquals("lastfile", strings.get(0));
         Assert.assertEquals("midfile", strings.get(1));
         Assert.assertEquals("mainfile", strings.get(2));
+
+        FileWriter fw = new FileWriter(mainLog.toFile(), true);
+        BufferedWriter bw = new BufferedWriter(fw);
+
+        String appendedText = "appendedText";
+        bw.write(appendedText);
+        bw.flush();
+
+        readAll(logReader, strings);
+        Assert.assertEquals(4, strings.size());
+        Assert.assertEquals(appendedText, strings.get(3));
     }
 
     private void readAll(LogReader logReader, ArrayList<String> strings) throws IOException {
@@ -47,26 +58,6 @@ public class LogReaderTest extends TempDirTest {
             } else {
                 break;
             }
-        }
-    }
-
-    @Test
-    public void test() throws Exception {
-        ConfigContext ctx = new ConfigContext();
-        File log = new File(ctx.getLogPath(), ctx.getCurrentFilename());
-        FileChooserImpl fc = new FileChooserImpl(
-                new File(ctx.getLogPath()),
-                log,
-                ctx.getRotatedPrefix()
-        );
-
-        RotatingFileChooser rfc = new RotatingFileChooser(fc, log);
-        byte[] bytes = new byte[8192];
-        LogReader logReader = new LogReader(rfc);
-        while (true) {
-            int read = logReader.read(bytes);
-            if (read != -1)
-                System.out.println(new String(bytes, 0, read));
         }
     }
 }

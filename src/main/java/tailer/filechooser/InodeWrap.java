@@ -9,29 +9,24 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class InodeWrap {
     /**
      * Uses reflection to get st_ino field from UnixFileKey
+     *
      * @param file
-     * @throws IllegalArgumentException up on any fail during inode retrieval
      * @return long inode representation
+     * @throws IllegalArgumentException up on any fail during inode retrieval
      */
-    public static long getInode(File file) {
-        while (true) {
-            try {
-                BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-                Object fileKey = basicFileAttributes.fileKey();
+    public static long getInode(File file) throws IOException {
+        try {
+            BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            Object fileKey = basicFileAttributes.fileKey();
 
-                Class<?> aClass = fileKey.getClass();
-                Field iNodeField = aClass.getDeclaredField("st_ino");
-                iNodeField.setAccessible(true);
-                return (long) iNodeField.get(fileKey);
-            } catch (IOException e) {
-                //what to do? file was deleted - no need for retry?
-            } catch (IllegalAccessException e) {
-                //TODO: add logging
-                throw new IllegalStateException("access rights problems", e);
-            } catch (NoSuchFieldException e) {
-                //TODO: add logging
-                throw new IllegalArgumentException("incorrectly specified field name", e);
-            }
+            Class<?> aClass = fileKey.getClass();
+            Field iNodeField = aClass.getDeclaredField("st_ino");
+            iNodeField.setAccessible(true);
+            return (long) iNodeField.get(fileKey);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("access rights problems", e);
+        } catch (NoSuchFieldException e) {
+            throw new IllegalArgumentException("incorrectly specified field name", e);
         }
     }
 }

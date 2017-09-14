@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class OffsetMapping {
-    private HashMap<Long, Long> mapping = new HashMap<>();
+    private final HashMap<Long, Long> mapping = new HashMap<>();
 
     public State getStateByTotalOffset(long offset) {
         List<Map.Entry<Long, Long>> collect = mapping.entrySet().stream().sorted(Map.Entry.comparingByValue()).collect(Collectors.toList());

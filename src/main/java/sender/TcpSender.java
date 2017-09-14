@@ -11,38 +11,29 @@ public class TcpSender implements AutoCloseable {
 
     private Socket socket;
 
-    public TcpSender(String host, int port) {
+    public TcpSender(String host, int port) throws IOException {
         this.host = host;
         this.port = port;
+
+        socket = new Socket(host, port);
     }
 
-    public boolean open(long offset) {
-        IOUtils.closeQuietly(socket);
-        try {
-            socket = new Socket(host, port);
-            try (OutputStream os = socket.getOutputStream()) {
-                try (DataOutputStream dos = new DataOutputStream(os)) {
-                    dos.writeLong(offset);
-                }
-            }
-            return true;
-        } catch (IOException e) {
-            IOUtils.closeQuietly(socket);
-            return false;
-        }
+    public void open(long offset) throws IOException {
+        OutputStream os = socket.getOutputStream();
+        DataOutputStream dos = new DataOutputStream(os);
+        dos.writeLong(offset);
     }
 
     public void write(byte[] bytes, int num) throws IOException {
-        try (OutputStream os = socket.getOutputStream()) {
-            os.write(bytes, 0, num);
-        }
+        OutputStream os = socket.getOutputStream();
+        os.write(bytes, 0, num);
     }
 
     public long read() throws IOException {
-        try (InputStream is = socket.getInputStream()) {
-            try (DataInputStream dis = new DataInputStream(is)) {
-                return dis.readLong();
-            }
+        InputStream is = socket.getInputStream();
+        DataInputStream dis = new DataInputStream(is);
+        try {
+            return dis.readLong();
         } catch (EOFException eof) {
             //partial read occurred
             return -1;
