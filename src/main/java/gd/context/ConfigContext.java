@@ -4,29 +4,29 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 public class ConfigContext {
-    Config config = ConfigFactory.load();
+    private final Config config = ConfigFactory.load();
 
     public String getLogPath() {
-        return config.getString("gd.tailer.file.directory");
+        return config.getString("tailer.file.directory");
     }
 
     public String getCurrentFilename() {
-        return config.getString("gd.tailer.file.name.current");
+        return config.getString("tailer.file.name.current");
     }
 
     public String getRotatedPrefix() {
-        return config.getString("gd.tailer.file.name.rotated.prefix");
+        return config.getString("tailer.file.name.rotated.prefix");
     }
 
     public String getStatePath() {
-        return config.getString("gd.tailer.state.path");
+        return config.getString("tailer.state.path");
     }
 
     public String getHost() {
-        return config.getString("gd.tailer.gd.sender.connection.ip");
+        return config.getString("tailer.sender.connection.ip");
     }
 
     public int getPort() {
-        return config.getInt("gd.tailer.gd.sender.connection.port");
+        return config.getInt("tailer.gd.sender.connection.port");
     }
 }

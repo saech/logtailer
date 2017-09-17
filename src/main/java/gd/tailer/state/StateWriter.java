@@ -10,10 +10,8 @@ public class StateWriter {
     }
 
     public void writeState(State state) throws IOException {
-        try (FileWriter fw = new FileWriter(file, true)) {
-            try (BufferedWriter bw = new BufferedWriter(fw)) {
-                bw.write(state.forStateFile());
-            }
+        try (FileWriter fw = new FileWriter(file, true); BufferedWriter bw = new BufferedWriter(fw)) {
+            bw.write(state.forStateFile());
         }
     }
 }

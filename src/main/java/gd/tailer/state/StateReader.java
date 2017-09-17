@@ -22,14 +22,9 @@ public class StateReader {
     public State restoreState() {
         ReversedLinesFileReader reader;
         try {
-            if (!file.exists()) {
-                if (file.createNewFile()) {
-                    return new State();
-                }
-            }
             reader = new ReversedLinesFileReader(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            return new State();
+            throw  new IllegalStateException("can't read state file");
         }
 
         try {
@@ -42,16 +37,17 @@ public class StateReader {
                 String preLastLine = reader.readLine();
                 if (!Strings.isNullOrEmpty(preLastLine)) {
                     String[] split = StringUtils.split(preLastLine.trim(), State.SEPARATOR);
-                    if (split.length != 2) {
+                    if (split.length != 3) {
                         //corrupted line, try next
                         log.warn("state file is corrupted");
                         continue;
                     }
 
                     try {
-                        long offset = Long.valueOf(split[0]);
-                        long ts = Long.valueOf(split[1]);
-                        return new State(offset, ts);
+                        long globalOffset = Long.valueOf(split[0]);
+                        long inode = Long.valueOf(split[1]);
+                        long localOffset = Long.valueOf(split[2]);
+                        return new State(inode, localOffset, globalOffset);
                     } catch (NumberFormatException ex) {
                         //corrupted line, try next
                         log.warn("state file is corrupted");
@@ -62,7 +58,7 @@ public class StateReader {
                 }
             }
         } catch (IOException e) {
-            return new State();
+            throw  new IllegalStateException("can't read state file");
         }
     }
 }

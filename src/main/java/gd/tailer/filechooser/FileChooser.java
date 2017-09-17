@@ -1,11 +1,11 @@
 package gd.tailer.filechooser;
 
 public interface FileChooser {
-    public FileNode findNext(long inode);
+    FileNode findNext(long inode);
 
-    public FileNode findOldest();
+    FileNode findOldest();
 
-    public FileNode find(long inode);
+    FileNode find(long inode);
 
-    public boolean isHead(FileNode fn);
+    boolean isHead(FileNode fn);
 }

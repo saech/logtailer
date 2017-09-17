@@ -19,13 +19,15 @@ public class OffsetMappingTest {
 
         checkState(offsetMapping, 750, 3, 150);
         checkState(offsetMapping, 250, 1, 250);
+        checkState(offsetMapping, 350, 2, 50);
         checkState(offsetMapping, 50, 1, 50);
+        checkState(offsetMapping, 0, 1, 0);
     }
 
     private void checkState(OffsetMapping offsetMapping, int totalOffset, int expectedInode, int expectedRelativePos) {
-        State stateByTotalOffset = offsetMapping.getStateByTotalOffset(totalOffset);
+        State stateByTotalOffset = offsetMapping.getStateByGlobalOffset(totalOffset);
         Assert.assertEquals(expectedInode, stateByTotalOffset.getInode());
-        Assert.assertEquals(expectedRelativePos, stateByTotalOffset.getPos());
+        Assert.assertEquals(expectedRelativePos, stateByTotalOffset.getLocalOffset());
     }
 
 }

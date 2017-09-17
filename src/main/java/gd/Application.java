@@ -15,71 +15,98 @@ import gd.tailer.state.StateWriter;
 import java.io.File;
 import java.io.IOException;
 
-public class Application implements Runnable {
+public class Application {
     private static final Logger log = LogManager.getLogger(Application.class);
-    public static final int DELAY = 1000;
+    private static final int DELAY = 1000;
+
     private final ConfigContext ctx;
+
+    private LogReader logReader;
+
+    private final File statePath;
+    private final OffsetMapping mapping;
 
     public Application(ConfigContext ctx) {
         this.ctx = ctx;
-    }
+        this.statePath = new File(ctx.getStatePath());
 
-    public Application() {
-        this.ctx = new ConfigContext();
+        try {
+            statePath.createNewFile();
+        } catch (IOException e) {
+            throw new IllegalStateException("can't create state file");
+        }
+
+        File mainLog = new File(ctx.getCurrentFilename());
+        RotatingFileChooser rfc = new RotatingFileChooser(
+                new FileChooserImpl(new File(ctx.getLogPath()), mainLog, ctx.getRotatedPrefix()),
+                mainLog
+        );
+
+        this.mapping = new OffsetMapping();
+        this.logReader = new LogReader(rfc);
     }
 
     public static void main(String[] args) {
-        log.info("gd.tailer application class executed");
+        log.info("initializing");
         Application app = new Application(new ConfigContext());
-        app.run();
+        try {
+            app.tail();
+        } catch (InterruptedException e) {
+            log.error("unexpected interruption. shutting down.", e);
+        }
     }
 
-    public void run() {
-        File statePath = new File(ctx.getStatePath());
+    public void tail() throws InterruptedException {
+        log.debug("state path: {}", statePath.toString());
         StateReader stateReader = new StateReader(statePath);
-        State state = stateReader.restoreState();
-        File mainLog = new File(ctx.getCurrentFilename());
-        FileChooserImpl fc = new FileChooserImpl(new File(ctx.getLogPath()), mainLog, ctx.getRotatedPrefix());
-        RotatingFileChooser rfc = new RotatingFileChooser(fc, mainLog);
-
-        int globalOffset = 0;
-        byte[] bytes = new byte[2048];
-        OffsetMapping mapping = new OffsetMapping();
         StateWriter stateWriter = new StateWriter(statePath);
-        log.info("state path: {}", statePath.toString());
-        try (LogReader logReader = new LogReader(rfc)) {
-            try (TcpSender tcpSender = new TcpSender(ctx.getHost(), ctx.getPort())) {
-                tcpSender.open(globalOffset);
-                logReader.init(state);
-                while (true) {
-                    int num = logReader.read(bytes);
-                    if (num != -1) {
-                        globalOffset += num;
-                        mapping.put(logReader.getInode(), globalOffset);
-                        tcpSender.write(bytes, num);
-                        log.info("num of bytes sent: {}", num);
-                    } else {
-                        Thread.sleep(DELAY);
-                    }
+        State state = stateReader.restoreState();
 
-                    long read = tcpSender.read();
-                    if (read != -1) {
-                        log.info("new offset received: {}", read);
-                        State ackedState = mapping.getStateByTotalOffset(read);
-                        if (ackedState != null) {
-                            log.info("new state acked. pos: {}, node: {}", ackedState.getPos(), ackedState.getInode());
-                            stateWriter.writeState(ackedState);
-                        } else {
-                            log.warn("can't map offset to inode. read offset: {}. ", read);
-                            log.warn("current mapping: {}", mapping.toString());
-                        }
-                    }
+        long globalOffset = state.getGlobalOffset();
+        byte[] bytes = new byte[2048];
+        int num = 0;
+        TcpSender tcpSender = null;
+
+        logReader.init(state);
+
+        while (true) {
+            if (num <= 0) {
+                num = logReader.read(bytes);
+                if (num <= 0) {
+                    log.debug("no data, falling asleep");
+                    Thread.sleep(DELAY);
+                    continue;
                 }
-            } catch (InterruptedException e) {
-                log.info("interruption received, exiting.");
             }
-        } catch (IOException e) {
-            log.warn("ioexception occurred", e);
+
+            if (tcpSender == null) {
+                try {
+                    tcpSender = new TcpSender(ctx.getHost(), ctx.getPort());
+                    tcpSender.open(globalOffset);
+                } catch (IOException e) {
+                    log.debug("exception during tcp sender opening, falling asleep", e);
+                    Thread.sleep(DELAY);
+                    continue;
+                }
+            }
+
+            try {
+                tcpSender.write(bytes, num);
+                long read = tcpSender.read();
+                if (read != -1) {
+                    stateWriter.writeState(mapping.getStateByGlobalOffset(read));
+                }
+            } catch (IOException e) {
+                log.error("exception during server interactions", e);
+                tcpSender.close();
+                tcpSender = null;
+                Thread.sleep(DELAY);
+            }
+
+            log.info("num of bytes sent: {}", num);
+            globalOffset += num;
+            num = 0;
+            mapping.put(logReader.getInode(), globalOffset);
         }
     }
 }

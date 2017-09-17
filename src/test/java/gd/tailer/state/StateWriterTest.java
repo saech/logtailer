@@ -14,14 +14,15 @@ public class StateWriterTest extends TempDirTest {
         StateWriter w = new StateWriter(p.toFile());
         StateReader r = new StateReader(p.toFile());
 
-        w.writeState(new State(10000, 777));
-        w.writeState(new State(2222, 888));
+        w.writeState(new State(888, 2222, 5000));
+        w.writeState(new State(777, 10000, 100000));
 
         String content = readFileToString(p);
         System.out.println(content);
 
         State state = r.restoreState();
-        Assert.assertEquals(2222, state.getPos());
-        Assert.assertEquals(888, state.getInode());
+        Assert.assertEquals(10000, state.getLocalOffset());
+        Assert.assertEquals(100000, state.getGlobalOffset());
+        Assert.assertEquals(777, state.getInode());
     }
 }

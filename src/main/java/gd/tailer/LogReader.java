@@ -22,29 +22,45 @@ public class LogReader implements RotatingReader, AutoCloseable {
         this.fc = fileChooser;
     }
 
-    public void init(State state) throws IOException {
-        fn = fc.find(state.getInode());
-        if (fn != null) {
-            prevInode = fn.getInode();
-            fn.seek(state.getPos());
-        } else {
-            prevInode = 0;
-        }
+    public void init(State state) {
+        do {
+            try {
+                fn = fc.find(state.getInode());
+                if (fn != null) {
+                    fn.seek(state.getLocalOffset());
+                    prevInode = fn.getInode();
+                } else {
+                    prevInode = 0;
+                }
+                return;
+            } catch (IOException e) {
+                log.error("error during log reader initialization from previous state. Try to take next inode");
+                IOUtils.closeQuietly(fn);
+                fn = fc.findNext(state.getInode());
+            }
+        } while (fn == null);
     }
 
-    public int read(byte[] bytes) throws IOException {
+    public int read(byte[] bytes) {
         do {
             if (fn != null) {
-                int num = fn.read(bytes);
-                if (num == -1) {
-                    if (!fn.isMoved() && fc.isHead(fn)) {
-                        return -1;
+                int num;
+                try {
+                    num = fn.read(bytes);
+                    if (num == -1) {
+                        if (!fn.isMoved() && fc.isHead(fn)) {
+                            return -1;
+                        }
+                        fn.close();
+                        prevInode = fn.getInode();
+                        fn = null;
+                    } else {
+                        return num;
                     }
-                    fn.close();
-                    prevInode = fn.getInode();
+                } catch (IOException e) {
+                    log.error("exception during file reading");
+                    IOUtils.closeQuietly(fn);
                     fn = null;
-                } else {
-                    return num;
                 }
             }
 
@@ -62,13 +78,6 @@ public class LogReader implements RotatingReader, AutoCloseable {
             return -1;
         }
         return fn.getInode();
-    }
-
-    public long getOffset() {
-        if (fn == null) {
-            return -1;
-        }
-        return fn.getOffset();
     }
 
     @Override

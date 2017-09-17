@@ -19,10 +19,6 @@ public class ClientMock extends TempDirTest {
         copyResourceToTempDir("/logs/log.2", "log.2");
         ConfigContext localConfig = ConfigMock.getLocalConfig(dir);
         Application app = new Application(localConfig);
-        Thread appThread = new Thread(app);
-        appThread.start();
-        Thread.sleep(5000);
-        appThread.interrupt();
-        appThread.join();
+        app.tail();
     }
 }
