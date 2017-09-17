@@ -6,9 +6,6 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="com.foo.Bar" level="trace" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
         <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>

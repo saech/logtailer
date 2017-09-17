@@ -30,7 +30,7 @@ public class LogNameComparator implements Comparator<File> {
             throw new IllegalArgumentException("illegal file name is applicable for given mask");
         }
 
-        return -firstIndex.compareTo(secondIndex);
+        return firstIndex.compareTo(secondIndex);
     }
 
     private Integer getIndex(String name) {

@@ -28,8 +28,8 @@ public class LogReaderTest extends TempDirTest {
         readAll(logReader, strings);
 
         Assert.assertEquals(3, strings.size());
-        Assert.assertEquals("lastfile", strings.get(0));
-        Assert.assertEquals("midfile", strings.get(1));
+        Assert.assertEquals("midfile", strings.get(0));
+        Assert.assertEquals("lastfile", strings.get(1));
         Assert.assertEquals("mainfile", strings.get(2));
 
         String appendedText = "appendedText";

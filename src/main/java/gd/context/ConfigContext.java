@@ -19,7 +19,7 @@ public class ConfigContext {
     }
 
     public String getStatePath() {
-        return config.getString("tailer.state.path");
+        return config.getString("tailer.statefile.path");
     }
 
     public String getHost() {
@@ -27,6 +27,17 @@ public class ConfigContext {
     }
 
     public int getPort() {
-        return config.getInt("tailer.gd.sender.connection.port");
+        return config.getInt("tailer.sender.connection.port");
+    }
+
+    @Override
+    public String toString() {
+        return String.format("logPath: %s; " +
+                "curFilename: %s; " + 
+                "rotatedPrefix: %s; " +
+                "statePath: %s; " +
+                "host: %s; " + 
+                "port: %d; ",
+                getLogPath(), getCurrentFilename(), getRotatedPrefix(), getStatePath(), getHost(), getPort());
     }
 }

@@ -6,7 +6,11 @@ import org.mockito.Mockito;
 import java.nio.file.Path;
 
 public class ConfigMock {
-    private ConfigContext ctxMock = Mockito.mock(ConfigContext.class);
+    private ConfigContext ctxMock = Mockito.spy(ConfigContext.class);
+
+    public static int getPort() {
+        return 61777;
+    }
 
     public ConfigMock mockHost(String host) {
         Mockito.when(ctxMock.getHost()).thenReturn(host);
@@ -29,7 +33,7 @@ public class ConfigMock {
     }
 
     public ConfigMock mockMainLog(Path path) {
-        Mockito.when(ctxMock.getCurrentFilename()).thenReturn(path.toString());
+        Mockito.when(ctxMock.getCurrentFilename()).thenReturn(path.getFileName().toString());
         return this;
     }
 
@@ -45,7 +49,7 @@ public class ConfigMock {
     public static ConfigContext getLocalConfig(Path path) {
         return new ConfigMock().mockDirectory(path)
                 .mockHost("localhost")
-                .mockPort(61777)
+                .mockPort(getPort())
                 .mockMainLog(path.resolve("log.txt"))
                 .mockMask("log.")
                 .mockStatePath(path.resolve("state.txt"))

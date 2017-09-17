@@ -12,7 +12,7 @@ public class ServerMock {
     private static final Logger log = LogManager.getLogger(ServerMock.class);
 
     public static void main(String[] args) {
-        new Server(61777).run();
+        new Server(ConfigMock.getPort()).run();
     }
 
     private static class Server extends Thread {
@@ -25,6 +25,7 @@ public class ServerMock {
         @Override
         public void run() {
             try (ServerSocket ss = new ServerSocket(port)) {
+                log.info("listening to: {}", port);
                 while (true) {
                     Socket s = ss.accept();
                     InputStream is = s.getInputStream();

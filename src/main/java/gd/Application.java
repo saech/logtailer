@@ -1,8 +1,6 @@
 package gd;
 
 import gd.context.ConfigContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import gd.sender.OffsetMapping;
 import gd.sender.TcpSender;
 import gd.tailer.LogReader;
@@ -11,6 +9,8 @@ import gd.tailer.filechooser.RotatingFileChooser;
 import gd.tailer.state.State;
 import gd.tailer.state.StateReader;
 import gd.tailer.state.StateWriter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,8 +35,8 @@ public class Application {
         } catch (IOException e) {
             throw new IllegalStateException("can't create state file");
         }
-
-        File mainLog = new File(ctx.getCurrentFilename());
+        
+        File mainLog = new File(ctx.getLogPath(), ctx.getCurrentFilename());
         RotatingFileChooser rfc = new RotatingFileChooser(
                 new FileChooserImpl(new File(ctx.getLogPath()), mainLog, ctx.getRotatedPrefix()),
                 mainLog
@@ -57,23 +57,24 @@ public class Application {
     }
 
     public void tail() throws InterruptedException {
-        log.debug("state path: {}", statePath.toString());
+        log.info("started tailing");
+        log.info("ctx: {}", ctx.toString());
         StateReader stateReader = new StateReader(statePath);
         StateWriter stateWriter = new StateWriter(statePath);
-        State state = stateReader.restoreState();
+        State initialState = stateReader.restoreState();
 
-        long globalOffset = state.getGlobalOffset();
+        long globalOffset = initialState.getGlobalOffset();
         byte[] bytes = new byte[2048];
         int num = 0;
         TcpSender tcpSender = null;
 
-        logReader.init(state);
+        logReader.init(initialState);
 
         while (true) {
             if (num <= 0) {
                 num = logReader.read(bytes);
                 if (num <= 0) {
-                    log.debug("no data, falling asleep");
+                    log.info("no data, falling asleep");
                     Thread.sleep(DELAY);
                     continue;
                 }
@@ -94,7 +95,9 @@ public class Application {
                 tcpSender.write(bytes, num);
                 long read = tcpSender.read();
                 if (read != -1) {
-                    stateWriter.writeState(mapping.getStateByGlobalOffset(read));
+                    State stateByGlobalOffset = mapping.getStateByGlobalOffset(read);
+                    stateWriter.writeState(stateByGlobalOffset);
+                    log.info("acked {}", stateByGlobalOffset);
                 }
             } catch (IOException e) {
                 log.error("exception during server interactions", e);

@@ -24,9 +24,9 @@ public class LogNameComparatorTest {
         String last = "access.log.10";
         files.add(mockFile(last));
         files.sort(comparator);
-        Assert.assertEquals(last, getName(0));
+        Assert.assertEquals(last, getName(2));
         Assert.assertEquals(second, getName(1));
-        Assert.assertEquals(first, getName(2));
+        Assert.assertEquals(first, getName(0));
         Assert.assertEquals(mainLogFile, getName(3));
     }
 

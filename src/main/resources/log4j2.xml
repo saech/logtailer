@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+    <Properties>
+        <Property name="log-path">C:/logs/</Property>
+    </Properties>
+    <Appenders>
+        <RollingFile name="RollingFile" fileName="target/tailer.logs/access.log"
+                     filePattern="target/tailer.logs/access.%i.log">
+            <PatternLayout>
+                <pattern>%d{dd/MMM/yyyy HH:mm:ss,SSS}- %c{1}: %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="2"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!--<Logger name="root" level="info" additivity="false">-->
+        <!--<appender-ref ref="RollingFile" level="debug"/>-->
+        <!--</Logger>-->
+        <Root level="info" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+
+</Configuration>
